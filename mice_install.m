@@ -1,10 +1,5 @@
 %% MICE INSTALLATION %%
 
-% MATLAB environment
-clear
-clc
-close all
-
 if isfile("mice_install.m")
     % SAVE INSTALL TO PATH
     copyfile("mice_install.m",userpath)

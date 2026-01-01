@@ -1,0 +1,12 @@
+*.mat
+*.png
+*.tif
+*.mp4
+*.avi
+*.gif
+*.IMG
+*.pdf
+*.JP2
+
+# Folder
+ext/mice/*
