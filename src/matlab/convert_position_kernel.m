@@ -1,7 +1,7 @@
 function [vec_TO, q_FROM2TO] = convert_position_kernel(time_UTC, frame_FROM, frame_TO, vec_from, filename_metakernel)
 
 %% SPICE KERNEL POOLING
-load_metakernel(filename_metakernel)
+tempPath = load_metakernel(filename_metakernel);
 
 %% CONVERT DATETIME TO ET
 if isnumeric(time_UTC)
@@ -19,5 +19,8 @@ end
 
 %% SPICE KERNEL UNLOADING
 cspice_kclear;
+cd(tempPath);
+
+end
 
 
