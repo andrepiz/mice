@@ -1,0 +1,1 @@
+out = load_LBL('kernels\dawn\ancillary\DAWNCEGR_2007_270.LBL');

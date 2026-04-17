@@ -1,10 +1,13 @@
-function [pos_ECI, vel_ECI] = extract_position_bodies_kernel(time, bodies_list, filename_metakernel, abcorr, obs)
+function [pos_ECI, vel_ECI] = extract_position_bodies_kernel(time, bodies_list, filename_metakernel, abcorr, obs, frame)
 
 if ~exist('abcorr','var')
     abcorr = 'LT+S';
 end
 if ~exist('obs','var')
     obs = 'EARTH';
+end
+if ~exist('frame','var')
+    frame = 'J2000';
 end
 
 %% SPICE KERNEL POOLING
@@ -22,7 +25,7 @@ if ~iscell(bodies_list)
     bodies_list = {bodies_list};
 end
 for ix = 1:length(bodies_list)
-    state_temp = cspice_spkezr(bodies_list{ix}, et_UTC, 'J2000', abcorr, obs);
+    state_temp = cspice_spkezr(bodies_list{ix}, et_UTC, frame, abcorr, obs);
     pos_ECI(3*(ix-1) + [1:3], :) = 1e3*state_temp(1:3, :);
     vel_ECI(3*(ix-1) + [1:3], :) = 1e3*state_temp(4:6, :);
 end

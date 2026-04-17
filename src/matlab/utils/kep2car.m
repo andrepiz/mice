@@ -1,59 +1,65 @@
-function [rr, vv] = kep2car(a, e, i, OM, om, th, mu)
-% kep2car converts Keplerian elements to Cartesian coordinates (ECI)
+function [rr, vv] = kep2car(kepEl,mu_p)
+
+% Transformation from Keplerian elements to cartesian coordinates
+% function [rr, vv] = kep2car(a, e, i, OM, om, th, mu)
 %
-% INPUTS: 
-% a   [Nx1] : Semi-Major Axis [m]
-% e   [Nx1] : Eccentricity [~]
-% i   [Nx1] : Inclination [rad]
-% OM  [Nx1] : RA of Ascending Node [rad]
-% om  [Nx1] : Argument of Periapsis [rad]
-% th  [Nx1] : True Anomaly [rad]
-% mu  [1]   : Gravitational parameter [m^3/s^2]
-%
-% OUTPUTS: 
-% rr [3xN]  : Position vectors [m]
-% vv [3xN]  : Velocity vectors [m/s]
+% INPUT
+% Keplerian elements of the orbit kepEl = [a e i OM om th]; 
+% a      [1x1]  Semi-major axis                                  [km]
+% e      [1x1]  Eccentricity                                     [-]
+% i      [1x1]  Inclination                                      [rad]
+% OM     [1x1]  RAAN (Right ascension of the ascending node)     [rad]
+% om     [1x1]  Argument of perigee                              [rad]
+% th     [1x1]  True anomaly                                     [rad]
 
-% Ensure column vectors
-a = a(:); e = e(:); i = i(:);
-OM = OM(:); om = om(:); th = th(:);
+% OUTPUT
+% rr     [3x1]  Position vector                                  [km]
+% vv     [3x1]  Velocity vector                                  [km/s]
 
-N = length(a);
 
-% Specific angular momentum
-p = a .* (1 - e.^2);      % [m]
-r = p ./ (1 + e .* cos(th));  % [m]
+a = kepEl(1); 
+e = kepEl(2);
+in = kepEl(3); 
+OM = kepEl(4); 
+om = kepEl(5); 
+th = kepEl(6); 
 
-% Position in perifocal frame
-R_pf = [r .* cos(th), r .* sin(th), zeros(N,1)]';  % 3xN
 
-% Velocity in perifocal frame
-V_pf = sqrt(mu ./ p)' .* [-sin(th), e + cos(th), zeros(N,1)]';  % 3xN
+p=a*(1-e^2); % Semi-latus rectum [km]
+c_th = cos(th);
+s_th = sin(th);
+r_p=(p/(1+e*c_th))*[c_th; s_th; 0]; % Position vector (perifocal coordinate (PQW) system) [km]
 
-% Allocate outputs
-rr = zeros(3, N);
-vv = zeros(3, N);
+v_p= sqrt(mu_p/p)*[-s_th; e+c_th; 0]; % Velocity vector (perifocal coordinate (PQW) system) [km/s]
 
-% Compute transformation matrices and apply
-for k = 1:N
-    % Rotation matrices
-    R_OM = [cos(OM(k)), sin(OM(k)), 0;
-           -sin(OM(k)), cos(OM(k)), 0;
-                     0,          0, 1];
+% Rotation around K of an OM angle
+c_OM = cos(OM);
+s_OM = sin(OM);
+R_OM=[c_OM, -s_OM, 0;...
+    s_OM ,c_OM, 0;...
+    0, 0, 1];
 
-    R_i = [1,      0,           0;
-           0, cos(i(k)),  sin(i(k));
-           0, -sin(i(k)), cos(i(k))];
+% Rotation around I' of an i angle
+c_in = cos(in);
+s_in = sin(in);
+R_i=[1, 0, 0;
+    0, c_in, -s_in;...
+    0, s_in, c_in];
 
-    R_om = [cos(om(k)), sin(om(k)), 0;
-           -sin(om(k)), cos(om(k)), 0;
-                      0,          0, 1];
+% Rotation around K'' of an om angle
+%     R_om=[cos(om+th) sin(om+th) 0
+%         -sin(om+th) cos(om+th) 0
+%         0 0 1];
+c_om = cos(om);
+s_om = sin(om);
+R_om=[c_om, -s_om, 0;...
+        s_om ,c_om, 0;...
+        0, 0,1];
 
-    T = (R_OM * R_i * R_om)';  % transpose = from perifocal to inertial
+R=R_OM*R_i*R_om; % Transformation matrix from GE to PF
 
-    % Apply transformation
-    rr(:,k) = T * R_pf(:,k);
-    vv(:,k) = T * V_pf(:,k);
-end
+ 
+rr=R*r_p; % Position vector (geocentric coordinates) [km]
+vv=R*v_p; % Velocity vector (geocentric coordinates) [km/s]
 
 end
